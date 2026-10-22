@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SongDetect • Identify Any Song From Middle Snippets & Human Singing</title>
+  <meta name="description" content="State-of-the-art music recognition engine that detects the full song from a 5-second middle snippet or your own human singing.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="glow-bg glow-purple"></div>
+  <div class="glow-bg glow-cyan"></div>
+  <div class="glow-bg glow-pink"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+        </div>
+        <div>
+          <h1 class="logo-text">Song<span>Detect</span></h1>
+          <p class="tagline">Dual-Engine Recognition • Studio Middle Snippets & Human Singing Voice</p>
+        </div>
+      </div>
+
+      <div class="header-badges">
+        <span class="badge badge-glow">
+          <span class="pulse-dot"></span> Worldwide Catalog
+        </span>
+        <button id="viewHistoryBtn" class="btn-ghost" title="View identification history">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          History (<span id="historyCount">0</span>)
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <!-- Input Mode Navigation -->
+      <nav class="nav-tabs">
+        <button class="tab-btn active" data-tab="micTab" id="tabMic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+          Live Listen (Mic)
+        </button>
+        <button class="tab-btn" data-tab="uploadTab" id="tabUpload">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          Upload Snippet / Voice
+        </button>
+        <button class="tab-btn" data-tab="lyricsTab" id="tabLyrics">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          Sing / Type Lyrics
+        </button>
+        <button class="tab-btn" data-tab="demoTab" id="tabDemo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          Demo Excerpts
+        </button>
+      </nav>
+
+      <!-- TAB 1: Live Microphone -->
+      <section id="micTab" class="tab-pane active">
+        <div class="mic-panel glass-card">
+          <!-- Detection Mode Selector -->
+          <div class="mode-selector-wrapper">
+            <span class="mode-label">Mode:</span>
+            <div class="mode-pills" id="micModeSelector">
+              <button class="mode-pill active" data-mode="auto" title="Automatically detects original studio song OR human singing voice">
+                ⚡ Smart Auto (Both)
+              </button>
+              <button class="mode-pill" data-mode="singing" title="Optimized for human singing, voice and lyrics">
+                🎤 Human Singing
+              </button>
+              <button class="mode-pill" data-mode="shazam" title="Original recorded track & middle snippets">
+                🎵 Studio Track
+              </button>
+            </div>
+          </div>
+
+          <div class="mic-visualizer-container">
+            <canvas id="micCanvas" width="360" height="360"></canvas>
+            <div class="mic-button-wrapper">
+              <button id="recordBtn" class="radar-btn" title="Click to listen">
+                <div class="radar-ripple ripple-1"></div>
+                <div class="radar-ripple ripple-2"></div>
+                <div class="radar-center">
+                  <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                  <div id="countdownNum" class="countdown-display hidden">6</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="mic-status-container">
+            <h2 id="micStatusTitle">Tap Radar to Sing or Play</h2>
+            <p id="micStatusDesc">Sing your favorite song or play music aloud. SongDetect identifies whole songs from just 6 seconds!</p>
+            
+            <!-- Live voice lyrics feedback box -->
+            <div id="liveSingingBox" class="live-singing-box hidden">
+              <span class="singing-pulse-dot"></span>
+              <span class="singing-label">Heard:</span>
+              <span id="liveSingingText">Listening to your voice...</span>
+            </div>
+          </div>
+
+          <div class="duration-selector">
+            <span>Listen Duration:</span>
+            <div class="duration-options">
+              <button class="duration-pill active" data-duration="6">6 sec</button>
+              <button class="duration-pill" data-duration="8">8 sec</button>
+              <button class="duration-pill" data-duration="10">10 sec</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: File Upload & Middle Slicer -->
+      <section id="uploadTab" class="tab-pane">
+        <div class="upload-panel glass-card">
+          <!-- Dropzone -->
+          <div id="dropZone" class="drop-zone">
+            <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.aac,.webm" hidden>
+            <div class="drop-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <h3>Drop your audio file here, or <span class="highlight-link">browse</span></h3>
+            <p>Upload a song file or a recording of your singing (MP3, WAV, M4A, OGG, WebM)</p>
+          </div>
+
+          <!-- File Slice Configuration (Shown once file is loaded) -->
+          <div id="fileConfigCard" class="file-config-card hidden">
+            <div class="file-summary">
+              <div class="file-info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 18V5l12-2v13"></path>
+                  <circle cx="6" cy="18" r="3"></circle>
+                  <circle cx="18" cy="16" r="3"></circle>
+                </svg>
+              </div>
+              <div class="file-details">
+                <span id="loadedFileName" class="file-name">filename.mp3</span>
+                <span id="loadedFileMeta" class="file-meta">Total Duration: 03:45</span>
+              </div>
+              <button id="clearFileBtn" class="btn-icon" title="Remove file">✕</button>
+            </div>
+
+            <!-- Upload Detection Mode -->
+            <div class="upload-mode-row">
+              <span class="mode-label">Analyze As:</span>
+              <div class="mode-pills" id="uploadModeSelector">
+                <button class="mode-pill active" data-mode="auto">⚡ Auto (Studio / Singing)</button>
+                <button class="mode-pill" data-mode="singing">🎤 Human Singing Recording</button>
+                <button class="mode-pill" data-mode="shazam">🎵 Studio Song Excerpt</button>
+              </div>
+            </div>
+
+            <!-- Middle Snippet Mode Toggle -->
+            <div class="slice-options-box">
+              <div class="slice-header">
+                <div>
+                  <h4>Middle Excerpt Detection</h4>
+                  <p class="sub-hint">Slice 6–10 seconds right from the middle of this song to detect it</p>
+                </div>
+                <button id="autoMiddleBtn" class="btn-secondary btn-sm">
+                  ⚡ Auto-Select Middle
+                </button>
+              </div>
+
+              <!-- Time controls -->
+              <div class="slice-controls-grid">
+                <div class="control-group">
+                  <label for="startTimeInput">Start Time (sec):</label>
+                  <div class="input-with-stepper">
+                    <input type="number" id="startTimeInput" min="0" step="1" value="30">
+                    <span id="startTimeFormatted" class="time-hint">00:30</span>
+                  </div>
+                </div>
+
+                <div class="control-group">
+                  <label for="durationInput">Snippet Length (sec):</label>
+                  <div class="input-with-stepper">
+                    <input type="number" id="durationInput" min="4" max="25" step="1" value="7">
+                    <span class="time-hint">Seconds</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="slice-slider-wrapper">
+                <input type="range" id="timeSlider" min="0" max="100" value="30" class="time-slider">
+                <div class="slider-labels">
+                  <span>0:00 (Start)</span>
+                  <span id="middleIndicator" class="highlight-middle">✦ Song Middle</span>
+                  <span id="endLabel">End</span>
+                </div>
+              </div>
+            </div>
+
+            <button id="detectUploadBtn" class="btn-primary btn-block">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              Detect Whole Song From This Audio
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: Sing or Type Lyrics Search -->
+      <section id="lyricsTab" class="tab-pane">
+        <div class="lyrics-search-panel glass-card">
+          <div class="lyrics-search-intro">
+            <div class="panel-icon">🎤</div>
+            <h3>Identify By Singing or Typing Words</h3>
+            <p>Remember only a line, chorus, or few words of a song? Type or speak them below and SongDetect will instantly locate the official track, album art, and 30-second preview!</p>
+          </div>
+
+          <div class="lyrics-input-wrapper">
+            <div class="input-with-mic">
+              <input type="text" id="lyricsTextInput" placeholder="e.g. 'I see a little silhouetto of a man' or 'blinded by the lights'" autocomplete="off">
+              <button id="speakLyricsBtn" class="btn-voice-input" title="Speak or Sing Lyrics into Mic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+            <button id="searchLyricsBtn" class="btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              Find Song
+            </button>
+          </div>
+
+          <div class="quick-examples">
+            <span>Try quick lyrics:</span>
+            <button class="quick-chip" data-query="mama just killed a man put a gun against his head">"Mama just killed a man"</button>
+            <button class="quick-chip" data-query="i wanna dance with somebody with somebody who loves me">"I wanna dance with somebody"</button>
+            <button class="quick-chip" data-query="i'm in love with the shape of you we push and pull like a magnet">"Shape of you"</button>
+            <button class="quick-chip" data-query="hello from the other side i must have called a thousand times">"Hello from the other side"</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: Instant Demo Snippets -->
+      <section id="demoTab" class="tab-pane">
+        <div class="demo-panel glass-card">
+          <div class="demo-intro">
+            <h3>Try Pre-Sliced Middle Excerpts</h3>
+            <p>We extracted 6-second clips directly from the middle of these legendary tracks. Click any sample to see SongDetect identify the entire song instantly!</p>
+          </div>
+
+          <div id="demoCardsGrid" class="demo-grid">
+            <!-- Sample cards populated dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Recognition Status / Loading Overlay -->
+      <div id="loadingCard" class="loading-card glass-card hidden">
+        <div class="sound-wave-loader">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <h3 id="loadingText">Analyzing audio frequencies & searching worldwide catalog...</h3>
+        <p id="loadingSubtext">Matching acoustic fingerprints and vocal AI models against millions of songs</p>
+      </div>
+
+      <!-- Result Card (When song is detected) -->
+      <div id="resultCard" class="result-card glass-card hidden">
+        <div class="result-hero">
+          <div class="cover-wrapper">
+            <img id="resCover" src="" alt="Album Artwork" class="cover-img">
+            <div class="cover-aura"></div>
+          </div>
+          <div class="meta-wrapper">
+            <div class="badge-row">
+              <div class="match-badge">
+                <span class="sparkle">✨</span> 100% Track Match
+              </div>
+              <div id="resSourceBadge" class="detection-source-badge">
+                <span id="resSourceIcon">🎵</span>
+                <span id="resSourceText">Studio Fingerprint</span>
+              </div>
+            </div>
+
+            <h2 id="resTitle" class="song-title">Song Title</h2>
+            <h3 id="resArtist" class="artist-name">Artist Name</h3>
+
+            <div class="song-chips">
+              <span id="resAlbumChip" class="chip">Album: Unknown</span>
+              <span id="resGenreChip" class="chip">Genre: Pop</span>
+              <span id="resOffsetChip" class="chip chip-accent">Snippet Offset: ~01:14</span>
+            </div>
+
+            <!-- Built-in Preview Player -->
+            <div id="audioPlayerContainer" class="preview-player-box">
+              <div class="player-top">
+                <span class="preview-label">🎵 Official Audio Preview</span>
+                <span id="playerTimer" class="player-time">0:00 / 0:30</span>
+              </div>
+              <div class="player-controls">
+                <button id="playPauseBtn" class="play-btn" title="Play Preview">
+                  <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" class="hidden">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  </svg>
+                </button>
+                <div class="scrubber-bar" id="audioScrubber">
+                  <div class="scrubber-progress" id="audioProgress"></div>
+                </div>
+              </div>
+              <audio id="audioElement" preload="none"></audio>
+            </div>
+
+            <!-- External Music Actions -->
+            <div class="action-buttons-row">
+              <a id="resSpotifyBtn" href="#" target="_blank" class="btn-service btn-spotify">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                </svg>
+                Listen on Spotify
+              </a>
+
+              <button id="resYouTubeBtn" class="btn-service btn-youtube">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                Play on YouTube
+              </button>
+
+              <a id="resAppleBtn" href="#" target="_blank" class="btn-service btn-apple">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.38c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.98.6-2.62 1.34-.57.65-1.06 1.71-.93 2.73 1 .08 2.01-.5 2.63-1.22z"/>
+                </svg>
+                Apple Music
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lyrics Accordion -->
+        <div id="lyricsContainer" class="lyrics-card hidden">
+          <button id="toggleLyricsBtn" class="lyrics-toggle">
+            <span>📜 Song Lyrics / Detected Vocals</span>
+            <span id="lyricsArrow">▼</span>
+          </button>
+          <div id="lyricsContent" class="lyrics-text hidden"></div>
+        </div>
+      </div>
+
+      <!-- Error / Not Found Card -->
+      <div id="errorCard" class="error-card glass-card hidden">
+        <div class="error-icon">⚠️</div>
+        <h3 id="errorTitle">No Match Found</h3>
+        <p id="errorDesc">We couldn't recognize this audio snippet. Please try singing clearly with recognizable lyrics, or use a louder recording.</p>
+        <button id="retryBtn" class="btn-secondary">Try Again</button>
+      </div>
+    </main>
+
+    <!-- History Drawer / Modal -->
+    <div id="historyModal" class="modal-backdrop hidden">
+      <div class="modal-card glass-card">
+        <div class="modal-header">
+          <h3>🕒 Identified Songs History</h3>
+          <button id="closeHistoryBtn" class="btn-icon">✕</button>
+        </div>
+        <div id="historyList" class="history-list">
+          <!-- Populated by JS -->
+        </div>
+        <div class="modal-footer">
+          <button id="clearHistoryBtn" class="btn-ghost btn-danger">Clear History</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- YouTube Embed Modal -->
+    <div id="youtubeModal" class="modal-backdrop hidden">
+      <div class="modal-card modal-lg glass-card">
+        <div class="modal-header">
+          <h3 id="ytModalTitle">YouTube Music Stream</h3>
+          <button id="closeYtBtn" class="btn-icon">✕</button>
+        </div>
+        <div class="video-container">
+          <iframe id="ytIframe" width="100%" height="400" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Dual-Engine Recognition • Apple Shazam Constellation Fingerprints + Vocal AI Lyrics Engine.</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
